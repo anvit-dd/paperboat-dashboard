@@ -23,6 +23,14 @@ import {
   FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -71,7 +79,8 @@ export default function NewProjectPage() {
   const [error, setError] = React.useState<ApiError>();
   const [submitting, setSubmitting] = React.useState(false);
   const [presetCodes, setPresetCodes] = React.useState<string[]>([]);
-  const [repoCloneUrl, setRepoCloneUrl] = React.useState("");
+  const [selectedRepo, setSelectedRepo] =
+    React.useState<GitHubRepository | null>(null);
 
   React.useEffect(() => {
     let active = true;
@@ -93,7 +102,7 @@ export default function NewProjectPage() {
           repositories,
           usage,
         });
-        setRepoCloneUrl(repositories[0]?.clone_url ?? "");
+        setSelectedRepo(repositories[0] ?? null);
       })
       .catch((err: unknown) => {
         if (!active) return;
@@ -114,9 +123,6 @@ export default function NewProjectPage() {
   const defaultMachine = catalog.machineTypes[0]?.code ?? "";
   const defaultRegion = catalog.regions[0]?.code ?? "";
   const defaultIdleTimeout = catalog.idleTimeouts[0]?.code ?? "";
-  const selectedRepo = catalog.repositories.find(
-    (repo) => repo.clone_url === repoCloneUrl,
-  );
   const availableStorageGB = catalog.usage?.available_storage_gb ?? 0;
   const totalStorageGB = catalog.usage
     ? catalog.usage.included_storage_gb + catalog.usage.purchased_storage_gb
@@ -137,7 +143,7 @@ export default function NewProjectPage() {
     try {
       const project = await projectActions.createProject({
         name: String(form.get("name") ?? ""),
-        repository_url: repoCloneUrl,
+        repository_url: selectedRepo?.clone_url ?? "",
         default_branch: String(form.get("default_branch") ?? ""),
         storage_gb: Number(form.get("storage_gb") ?? defaultStorageGB),
         machine_type_code: String(form.get("machine_type_code") ?? defaultMachine),
@@ -210,22 +216,34 @@ export default function NewProjectPage() {
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="repository_url">GitHub repository</FieldLabel>
-              <NativeSelect
-                id="repository_url"
-                name="repository_url"
-                className="w-full"
-                value={repoCloneUrl}
-                onChange={(event) => setRepoCloneUrl(event.target.value)}
-                required
-                disabled={catalog.repositories.length === 0}
+              <Combobox
+                items={catalog.repositories}
+                value={selectedRepo}
+                onValueChange={(repo) => setSelectedRepo(repo)}
+                itemToStringLabel={(repo: GitHubRepository) => repo.full_name}
               >
-                {catalog.repositories.map((repo) => (
-                  <NativeSelectOption key={repo.clone_url} value={repo.clone_url}>
-                    {repo.full_name}
-                    {repo.private ? " (private)" : ""}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+                <ComboboxInput
+                  id="repository_url"
+                  className="w-full"
+                  placeholder="Search repositories…"
+                  disabled={catalog.repositories.length === 0}
+                />
+                <ComboboxContent>
+                  <ComboboxEmpty>No matching repositories.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(repo: GitHubRepository) => (
+                      <ComboboxItem key={repo.clone_url} value={repo}>
+                        <span className="truncate">{repo.full_name}</span>
+                        {repo.private ? (
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            private
+                          </span>
+                        ) : null}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
               <FieldDescription>
                 Pick the repository Paperboat should clone onto the machine.
               </FieldDescription>
