@@ -20,8 +20,14 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { navGroups } from "@/components/dashboard/nav-config";
 import { PaperboatMark } from "@/components/dashboard/paperboat-mark";
+import { getEntitlement, getUsage } from "@/lib/api/billing";
+import { listCatalogPlans } from "@/lib/api/catalog";
+import { useApi } from "@/lib/api/use-api";
+import type { CatalogPlan, Entitlement, Usage } from "@/lib/api/types";
+import { formatCredits } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 function isActive(pathname: string, href: string) {
@@ -31,6 +37,23 @@ function isActive(pathname: string, href: string) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const entitlement = useApi<Entitlement>(getEntitlement);
+  const usage = useApi<Usage>(getUsage);
+  const plans = useApi<CatalogPlan[]>(listCatalogPlans);
+  const currentPlan = plans.data?.find(
+    (plan) => plan.code === entitlement.data?.plan_code,
+  );
+  const creditBalance = Number(usage.data?.credits_balance);
+  const creditQuota = Number(currentPlan?.included_credits);
+  const hasCreditQuota =
+    Number.isFinite(creditBalance) &&
+    Number.isFinite(creditQuota) &&
+    creditQuota > 0;
+  const creditPercentage = hasCreditQuota
+    ? Math.min(100, Math.max(0, (creditBalance / creditQuota) * 100))
+    : 0;
+  const quotaLoading = entitlement.loading || usage.loading || plans.loading;
+  const quotaUnavailable = entitlement.error || usage.error || plans.error;
 
   return (
     <Sidebar collapsible="icon">
@@ -98,22 +121,30 @@ export function AppSidebar() {
               <HugeiconsIcon icon={Rocket01Icon} className="size-4" />
             </span>
             <div className="grid">
-              <span className="text-xs font-medium leading-tight">Free plan</span>
+              <span className="text-xs font-medium leading-tight">
+                {entitlement.data?.plan_name ?? "Plan"}
+              </span>
               <span className="text-[0.6875rem] leading-tight text-muted-foreground">
-                3 of 12 agents used
+                {quotaLoading
+                  ? "Loading credit quota..."
+                  : quotaUnavailable || !hasCreditQuota
+                    ? "Credit quota unavailable"
+                    : `${formatCredits(creditBalance)} / ${formatCredits(creditQuota)} credits`}
               </span>
             </div>
           </div>
-          <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-1/4 rounded-full bg-primary" />
-          </div>
+          <Progress
+            value={creditPercentage}
+            aria-label="Credit balance remaining"
+            className="mt-2.5 gap-0"
+          />
           <Button
             size="sm"
             className="mt-3 w-full"
             nativeButton={false}
             render={<Link href="/dashboard/billing" />}
           >
-            Upgrade plan
+            {entitlement.data?.plan_code === "free" ? "Upgrade plan" : "View plans"}
           </Button>
         </div>
       </SidebarFooter>

@@ -22,6 +22,7 @@ import {
 import { useApi } from "@/lib/api/use-api";
 import { getUsage } from "@/lib/api/billing";
 import type { Usage } from "@/lib/api/types";
+import { formatCredits } from "@/lib/format";
 
 export default function UsagePage() {
   const { data, error, loading } = useApi<Usage>(getUsage);
@@ -64,7 +65,7 @@ export default function UsagePage() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Credits"
-              value={data.credits_balance}
+              value={formatCredits(data.credits_balance)}
               icon={CreditCardIcon}
               trend="flat"
             />

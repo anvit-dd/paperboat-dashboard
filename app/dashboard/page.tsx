@@ -36,6 +36,7 @@ import { useApi } from "@/lib/api/use-api";
 import { getUsage } from "@/lib/api/billing";
 import { useProjects } from "@/lib/api/use-projects";
 import type { Usage } from "@/lib/api/types";
+import { formatCredits } from "@/lib/format";
 
 const RUNNING = new Set(["running", "ready", "starting", "restarting"]);
 
@@ -89,7 +90,7 @@ export default function OverviewPage() {
         />
         <StatCard
           label="Credits"
-          value={usage.data?.credits_balance ?? "—"}
+          value={formatCredits(usage.data?.credits_balance)}
           icon={CreditCardIcon}
           trend="flat"
         />

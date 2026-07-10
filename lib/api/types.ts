@@ -36,6 +36,7 @@ export interface BillingPlanProduct {
   plan_name: string;
   included_credits: string;
   included_storage_gb: number;
+  metadata: Record<string, unknown> | null;
 }
 
 export interface GitHubStatus {
@@ -137,6 +138,7 @@ export interface CatalogPlan {
   active: boolean;
   included_credits: string;
   included_storage_gb: number;
+  metadata: Record<string, unknown> | null;
   version: number;
 }
 
