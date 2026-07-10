@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+Paperboat CLI device approval is frozen in
+[`docs/cli-device-authorization.md`](docs/cli-device-authorization.md); implementation is
+tracked as Phase 2 of the cross-repo CLI integration plan.
+
 ## Getting Started
 
 First, run the development server:
