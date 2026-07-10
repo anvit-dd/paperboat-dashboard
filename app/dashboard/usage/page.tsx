@@ -1,13 +1,7 @@
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Download01Icon,
-  Activity01Icon,
-  Cpu,
-  Database01Icon,
-  CreditCardIcon,
-} from "@hugeicons/core-free-icons";
+"use client";
 
-import { Button } from "@/components/ui/button";
+import { CreditCardIcon, Database01Icon } from "@hugeicons/core-free-icons";
+
 import {
   Card,
   CardContent,
@@ -15,67 +9,105 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { Progress } from "@/components/ui/progress";
+import { Spinner } from "@/components/ui/spinner";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { RunsChart, ComputeChart } from "@/components/dashboard/overview-charts";
-
-const breakdown = [
-  { label: "Compute (vCPU-hours)", value: "12,480", cost: "$312.00" },
-  { label: "Hermes messages", value: "1.84B", cost: "$92.00" },
-  { label: "Storage (GB-months)", value: "1,436", cost: "$43.08" },
-  { label: "Tunnel egress (GB)", value: "884", cost: "$35.02" },
-];
+import { PageHeader } from "@/components/dashboard/page-header";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { useApi } from "@/lib/api/use-api";
+import { getUsage } from "@/lib/api/billing";
+import type { Usage } from "@/lib/api/types";
 
 export default function UsagePage() {
+  const { data, error, loading } = useApi<Usage>(getUsage);
+
+  const storagePct =
+    data && data.included_storage_gb + data.purchased_storage_gb > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (data.allocated_storage_gb /
+              (data.included_storage_gb + data.purchased_storage_gb)) *
+              100,
+          ),
+        )
+      : 0;
+
   return (
     <>
       <PageHeader
         eyebrow="Observability"
         title="Usage"
-        description="Track consumption and projected spend across every Paperboat product."
-        actions={
-          <Button variant="outline" size="lg">
-            <HugeiconsIcon icon={Download01Icon} />
-            Export CSV
-          </Button>
-        }
+        description="Your credit balance and storage allocation across the platform."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Runs / mo" value="486K" delta="+12%" trend="up" icon={Activity01Icon} />
-        <StatCard label="vCPU-hours" value="12.5K" delta="+8%" trend="up" icon={Cpu} />
-        <StatCard label="Storage" value="1.40 TB" delta="+4%" trend="up" icon={Database01Icon} />
-        <StatCard label="Est. spend" value="$482" delta="of $600 cap" trend="flat" icon={CreditCardIcon} />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <RunsChart />
-        <ComputeChart />
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-heading text-base font-semibold">
-            Cost breakdown
-          </CardTitle>
-          <CardDescription>Current billing period · Jun 2026</CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y divide-border">
-          {breakdown.map((row) => (
-            <div key={row.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-              <span className="text-sm">{row.label}</span>
-              <div className="flex items-center gap-6">
-                <span className="tabular-nums text-sm text-muted-foreground">{row.value}</span>
-                <span className="w-20 text-right tabular-nums text-sm font-medium">{row.cost}</span>
-              </div>
-            </div>
-          ))}
-          <div className="flex items-center justify-between pt-3">
-            <span className="text-sm font-semibold">Total</span>
-            <span className="font-heading text-lg font-semibold tabular-nums">$482.10</span>
+      {loading ? (
+        <div className="flex flex-1 items-center justify-center py-16">
+          <Spinner className="size-6 text-muted-foreground" />
+        </div>
+      ) : error || !data ? (
+        <Empty className="min-h-[16rem] border">
+          <EmptyHeader>
+            <EmptyTitle className="font-heading">Couldn&apos;t load usage</EmptyTitle>
+            <EmptyDescription>
+              {error?.message ?? "Usage data is unavailable."}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Credits"
+              value={data.credits_balance}
+              icon={CreditCardIcon}
+              trend="flat"
+            />
+            <StatCard
+              label="Included storage"
+              value={`${data.included_storage_gb} GB`}
+              icon={Database01Icon}
+              trend="flat"
+            />
+            <StatCard
+              label="Purchased storage"
+              value={`${data.purchased_storage_gb} GB`}
+              icon={Database01Icon}
+              trend="flat"
+            />
+            <StatCard
+              label="Available storage"
+              value={`${data.available_storage_gb} GB`}
+              icon={Database01Icon}
+              trend="flat"
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-heading text-base font-semibold">
+                Storage allocation
+              </CardTitle>
+              <CardDescription>
+                {data.allocated_storage_gb} GB allocated of{" "}
+                {data.included_storage_gb + data.purchased_storage_gb} GB total
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Progress value={storagePct} />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{storagePct}% allocated</span>
+                <span>{data.available_storage_gb} GB free</span>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </>
   );
 }

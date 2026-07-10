@@ -1,5 +1,38 @@
-import { handleAuth } from "@workos-inc/authkit-nextjs";
+import { serverBaseUrl } from "@/lib/api/server";
 
-// Handles the OAuth/Magic-link callback from WorkOS, exchanges the code for a
-// session, and redirects the user. Matches NEXT_PUBLIC_WORKOS_REDIRECT_URI.
-export const GET = handleAuth({ returnPathname: "/dashboard" });
+/**
+ * WorkOS redirects here with `?code&state`. We hand both to the server's
+ * `/api/auth/workos/callback` (forwarding the `paperboat_oauth_state` cookie it
+ * set at sign-in). The server validates state, exchanges the code, and returns
+ * `Set-Cookie` for the session + CSRF, which we relay onto the dashboard origin.
+ */
+export async function GET(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const redirectUri = process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI;
+
+  if (!code || !state) {
+    return Response.redirect(new URL("/login?error=oauth", req.url), 302);
+  }
+
+  const serverRes = await fetch(serverBaseUrl() + "/api/auth/workos/callback", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      cookie: req.headers.get("cookie") ?? "",
+    },
+    body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
+    cache: "no-store",
+  });
+
+  const location = serverRes.ok ? "/dashboard" : "/login?error=auth";
+  const res = new Response(null, {
+    status: 302,
+    headers: { location: new URL(location, req.url).toString() },
+  });
+  for (const cookie of serverRes.headers.getSetCookie()) {
+    res.headers.append("set-cookie", cookie);
+  }
+  return res;
+}

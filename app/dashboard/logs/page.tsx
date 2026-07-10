@@ -1,25 +1,16 @@
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Download01Icon } from "@hugeicons/core-free-icons";
-
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { LogViewer } from "@/components/dashboard/log-viewer";
+import { ComingSoon } from "@/components/dashboard/coming-soon";
+import { TerminalIcon } from "@hugeicons/core-free-icons";
 
-export default function LogsPage() {
+export default function Page() {
   return (
     <>
-      <PageHeader
-        eyebrow="Observability"
-        title="Logs"
-        description="A unified, streaming view of stdout, tool calls, and system events across every agent."
-        actions={
-          <Button variant="outline" size="lg">
-            <HugeiconsIcon icon={Download01Icon} />
-            Export
-          </Button>
-        }
+      <PageHeader eyebrow="Account" title="Logs" description="Live logs streamed from your machines and agents." />
+      <ComingSoon
+        icon={TerminalIcon}
+        title="Logs aren't available yet"
+        description="Log streaming will appear here once the control plane exposes it."
       />
-      <LogViewer />
     </>
   );
 }

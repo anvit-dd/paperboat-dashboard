@@ -28,7 +28,13 @@ const STATUS_STYLES: Record<Status, string> = {
 
 const PULSE: Status[] = ["running", "active", "healthy", "deploying"];
 
-export function StatusBadge({ status }: { status: Status }) {
+export function StatusBadge({
+  status,
+  label = status,
+}: {
+  status: Status;
+  label?: string;
+}) {
   return (
     <Badge
       variant="secondary"
@@ -40,7 +46,7 @@ export function StatusBadge({ status }: { status: Status }) {
           PULSE.includes(status) && "animate-pulse",
         )}
       />
-      {status}
+      {label}
     </Badge>
   );
 }

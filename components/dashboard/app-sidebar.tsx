@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SparklesIcon, Rocket01Icon } from "@hugeicons/core-free-icons";
+import { Rocket01Icon } from "@hugeicons/core-free-icons";
 
 import {
   Sidebar,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { navGroups } from "@/components/dashboard/nav-config";
+import { PaperboatMark } from "@/components/dashboard/paperboat-mark";
 import { cn } from "@/lib/utils";
 
 function isActive(pathname: string, href: string) {
@@ -38,7 +39,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
               <span className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <HugeiconsIcon icon={SparklesIcon} />
+                <PaperboatMark className="size-4" />
               </span>
               <div className="grid flex-1 text-left leading-tight">
                 <span className="truncate font-heading text-sm font-semibold tracking-tight">

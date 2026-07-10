@@ -44,7 +44,7 @@ import {
 } from "@/lib/api/catalog";
 import { getUsage } from "@/lib/api/billing";
 import { listGitHubRepositories } from "@/lib/api/github";
-import { useProjectActions } from "@/lib/api/use-projects";
+import { useProjectActions, useProjects } from "@/lib/api/use-projects";
 import type {
   CatalogIdleTimeout,
   CatalogMachineType,
@@ -74,6 +74,7 @@ const emptyCatalog: CatalogState = {
 export default function NewProjectPage() {
   const router = useRouter();
   const projectActions = useProjectActions();
+  const { projects } = useProjects();
   const [catalog, setCatalog] = React.useState<CatalogState>(emptyCatalog);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<ApiError>();
@@ -128,13 +129,25 @@ export default function NewProjectPage() {
     ? catalog.usage.included_storage_gb + catalog.usage.purchased_storage_gb
     : 0;
   const defaultStorageGB = Math.max(1, Math.min(10, availableStorageGB));
+  const deletingProjects = projects.filter((project) => project.state === "deleting");
+  const hasStoragePendingRelease =
+    availableStorageGB < 1 && deletingProjects.length > 0;
   const blockers = [
     catalog.repositories.length === 0 ? "no GitHub repositories" : undefined,
     catalog.machineTypes.length === 0 ? "no active machine types" : undefined,
     catalog.regions.length === 0 ? "no enabled Fly regions" : undefined,
     catalog.idleTimeouts.length === 0 ? "no active idle timeout options" : undefined,
-    availableStorageGB < 1 ? "no available storage" : undefined,
+    availableStorageGB < 1
+      ? hasStoragePendingRelease
+        ? "storage release in progress"
+        : "no available storage"
+      : undefined,
   ].filter(Boolean);
+  const blockerMessage = hasStoragePendingRelease
+    ? "Project creation is temporarily blocked while storage from a deleted project is being released."
+    : blockers.length > 0
+      ? `Project creation is blocked by ${blockers.join(", ")}.`
+      : undefined;
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -324,6 +337,9 @@ export default function NewProjectPage() {
                 />
                 <FieldDescription>
                   {availableStorageGB} GB available out of {totalStorageGB} GB total.
+                  {hasStoragePendingRelease
+                    ? " Storage from a deleted project is still being released."
+                    : ""}
                 </FieldDescription>
               </Field>
               <Field>
@@ -381,10 +397,8 @@ export default function NewProjectPage() {
             />
           </Field>
 
-          {blockers.length > 0 ? (
-            <FieldError>
-              Project creation is blocked by {blockers.join(", ")}.
-            </FieldError>
+          {blockerMessage ? (
+            <FieldError>{blockerMessage}</FieldError>
           ) : null}
 
           <div className="flex justify-end gap-3 border-t pt-6">

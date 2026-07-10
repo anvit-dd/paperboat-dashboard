@@ -1,9 +1,9 @@
-import { withAuth } from "@workos-inc/authkit-nextjs";
 import { redirect } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SparklesIcon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import { buttonVariants } from "@/components/ui/button";
+import { PaperboatMark } from "@/components/dashboard/paperboat-mark";
 import {
   Card,
   CardContent,
@@ -13,10 +13,12 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { getMeServer } from "@/lib/api/me-server";
+
 export default async function LoginPage() {
-  // Read-only session check. Already signed in? Skip the login screen.
-  const { user } = await withAuth();
-  if (user) {
+  // Read-only session check against paperboat-server. Already signed in? Skip.
+  const me = await getMeServer();
+  if (me) {
     redirect("/dashboard");
   }
 
@@ -25,7 +27,7 @@ export default async function LoginPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center gap-3 text-center">
           <span className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-float">
-            <HugeiconsIcon icon={SparklesIcon} className="size-5" />
+            <PaperboatMark className="size-6" />
           </span>
           <div className="space-y-1">
             <p className="font-mono text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">

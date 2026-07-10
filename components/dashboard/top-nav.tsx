@@ -57,13 +57,7 @@ function useBreadcrumbs() {
   });
 }
 
-export function TopNav({
-  user,
-  signOutAction,
-}: {
-  user: TopNavUser;
-  signOutAction: () => Promise<void>;
-}) {
+export function TopNav({ user }: { user: TopNavUser }) {
   const crumbs = useBreadcrumbs();
   const name =
     [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
@@ -147,26 +141,38 @@ export function TopNav({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
+              <DropdownMenuItem
+                nativeButton={false}
+                render={<Link href="/dashboard/settings" />}
+              >
                 <HugeiconsIcon icon={UserCircleIcon} />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
+              <DropdownMenuItem
+                nativeButton={false}
+                render={<Link href="/dashboard/settings" />}
+              >
                 <HugeiconsIcon icon={Settings01Icon} />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem render={<Link href="/dashboard/billing" />}>
+              <DropdownMenuItem
+                nativeButton={false}
+                render={<Link href="/dashboard/billing" />}
+              >
                 <HugeiconsIcon icon={CreditCardIcon} />
                 Billing
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
+            <DropdownMenuItem
+              nativeButton={false}
+              render={<Link href="/dashboard/settings" />}
+            >
               <HugeiconsIcon icon={HelpCircleIcon} />
               Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <form action={signOutAction}>
+            <form action="/auth/logout" method="post">
               <DropdownMenuItem
                 variant="destructive"
                 render={<button type="submit" className="w-full" />}

@@ -1,37 +1,21 @@
-import { signOut, withAuth } from "@workos-inc/authkit-nextjs";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { TopNav } from "@/components/dashboard/top-nav";
+import { getMeServer } from "@/lib/api/me-server";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Gate the whole dashboard segment. A plain redirect avoids writing cookies
-  // during render for unauthenticated visitors.
-  const { user } = await withAuth();
-  if (!user && process.env.NODE_ENV !== "development") {
+  // Gate the dashboard on a valid paperboat-server session (the server is the
+  // trust root). No session → send to /login. Read-only; the session is issued
+  // and rotated by the server via the BFF, never written here.
+  const me = await getMeServer();
+  if (!me) {
     redirect("/login");
-  }
-  const viewer = user ?? {
-    email: "dinesh.dadape@gmail.com",
-    firstName: "Anvit",
-    lastName: "Dadape",
-    profilePictureUrl: null,
-  };
-
-  async function signOutAction() {
-    "use server";
-    // WorkOS requires an absolute return_to URL (registered in the dashboard's
-    // logout redirect allowlist), not a relative path.
-    const h = await headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-    const proto = h.get("x-forwarded-proto") ?? "http";
-    await signOut({ returnTo: `${proto}://${host}/login` });
   }
 
   return (
@@ -40,12 +24,11 @@ export default async function DashboardLayout({
       <SidebarInset className="min-w-0">
         <TopNav
           user={{
-            email: viewer.email,
-            firstName: viewer.firstName,
-            lastName: viewer.lastName,
-            profilePictureUrl: viewer.profilePictureUrl,
+            email: me.email,
+            firstName: me.display_name || null,
+            lastName: null,
+            profilePictureUrl: null,
           }}
-          signOutAction={signOutAction}
         />
         <main className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
           {children}
