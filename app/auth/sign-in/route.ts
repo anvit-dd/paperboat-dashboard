@@ -1,4 +1,5 @@
 import { serverBaseUrl } from "@/lib/api/server";
+import { authReturnCookie, normalizeUserCode } from "@/lib/auth-return";
 
 /**
  * Begin sign-in. The SERVER owns WorkOS, so we ask it to mint an OAuth `state`
@@ -6,7 +7,9 @@ import { serverBaseUrl } from "@/lib/api/server";
  * cookie to the dashboard origin, then redirect the browser to WorkOS. WorkOS
  * sends the user back to `/callback`, which hands the code to the server.
  */
-export async function GET(): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
+  const requestUrl = new URL(req.url);
+  const returnCode = normalizeUserCode(requestUrl.searchParams.get("code"));
   const clientId = process.env.WORKOS_CLIENT_ID;
   const redirectUri = process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI;
   const authorizeBase =
@@ -40,5 +43,9 @@ export async function GET(): Promise<Response> {
   for (const cookie of stateRes.headers.getSetCookie()) {
     res.headers.append("set-cookie", cookie);
   }
+  res.headers.append(
+    "set-cookie",
+    authReturnCookie(returnCode, requestUrl.protocol === "https:"),
+  );
   return res;
 }

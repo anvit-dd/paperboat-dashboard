@@ -13,6 +13,50 @@ export interface Me {
   workos_subject: string;
 }
 
+export type DeviceRequestState =
+  | "pending"
+  | "approved"
+  | "denied"
+  | "expired"
+  | "consumed";
+
+export interface DeviceRequest {
+  user_code: string;
+  client_label: string;
+  device_type: "desktop" | "server" | "container";
+  os: string;
+  scopes: string[];
+  issued_at: string;
+  expires_at: string;
+  state: DeviceRequestState;
+}
+
+export interface AuthorizedClient {
+  client_session_id: string;
+  client_id: "paperboat-cli";
+  client_label: string;
+  device_type: "desktop" | "server" | "container";
+  os: string;
+  scopes: string[];
+  state: "active" | "revoked";
+  created_at: string;
+  approved_at: string;
+  last_used_at: string | null;
+  revoked_at: string | null;
+  revocation_reason: string | null;
+  current: boolean;
+}
+
+export interface AuthorizedClientList {
+  items: AuthorizedClient[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+    next_offset: number | null;
+  };
+}
+
 export interface Entitlement {
   state: string;
   plan_code?: string;

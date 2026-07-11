@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { AuthorizedClientsCard } from "@/components/dashboard/authorized-clients-card";
 import { useApi } from "@/lib/api/use-api";
 import { ApiError } from "@/lib/api/client";
 import { getMe } from "@/lib/api/me";
@@ -74,6 +75,7 @@ export default function SettingsPage() {
         </Card>
 
         <GitHubCard status={github} />
+        <AuthorizedClientsCard />
       </div>
     </>
   );

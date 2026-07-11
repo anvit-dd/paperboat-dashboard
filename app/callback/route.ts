@@ -1,4 +1,10 @@
 import { serverBaseUrl } from "@/lib/api/server";
+import {
+  AUTH_RETURN_COOKIE,
+  authReturnCookie,
+  cliAuthorizePath,
+  readCookieValue,
+} from "@/lib/auth-return";
 
 /**
  * WorkOS redirects here with `?code&state`. We hand both to the server's
@@ -26,7 +32,10 @@ export async function GET(req: Request): Promise<Response> {
     cache: "no-store",
   });
 
-  const location = serverRes.ok ? "/dashboard" : "/login?error=auth";
+  const returnPath = cliAuthorizePath(
+    readCookieValue(req.headers.get("cookie") ?? "", AUTH_RETURN_COOKIE),
+  );
+  const location = serverRes.ok ? (returnPath ?? "/dashboard") : "/login?error=auth";
   const res = new Response(null, {
     status: 302,
     headers: { location: new URL(location, req.url).toString() },
@@ -34,5 +43,9 @@ export async function GET(req: Request): Promise<Response> {
   for (const cookie of serverRes.headers.getSetCookie()) {
     res.headers.append("set-cookie", cookie);
   }
+  res.headers.append(
+    "set-cookie",
+    authReturnCookie(null, url.protocol === "https:"),
+  );
   return res;
 }
