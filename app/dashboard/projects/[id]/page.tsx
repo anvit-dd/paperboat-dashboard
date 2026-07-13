@@ -24,6 +24,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { projectStatus } from "@/components/dashboard/project-state";
+import { ConfigSyncIndicator } from "@/components/dashboard/config-sync-indicator";
 import {
   Empty,
   EmptyDescription,
@@ -107,6 +108,7 @@ export default function ProjectDetailPage() {
 
       <div className="flex items-center gap-3">
         <StatusBadge status={projectStatus(p.state)} />
+        <ConfigSyncIndicator projectId={p.id} />
         {LIVE_STATES.has(p.state) ? (
           <span className="text-xs text-muted-foreground">Live updates on</span>
         ) : null}

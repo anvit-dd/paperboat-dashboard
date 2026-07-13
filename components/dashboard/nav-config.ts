@@ -1,5 +1,6 @@
 import {
   Folder01Icon,
+  Configuration01Icon,
   Analytics01Icon,
   CreditCardIcon,
   Settings01Icon,
@@ -25,6 +26,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { title: "Overview", href: "/dashboard", icon: DashboardSquare01Icon },
       { title: "Projects", href: "/dashboard/projects", icon: Folder01Icon },
+      { title: "Configuration", href: "/dashboard/configuration", icon: Configuration01Icon },
     ],
   },
   {

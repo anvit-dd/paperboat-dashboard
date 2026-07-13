@@ -173,6 +173,53 @@ export interface ProjectEvent {
   created_at: string;
 }
 
+export type ConfigSyncState =
+  | "restoring"
+  | "watching"
+  | "pending"
+  | "syncing"
+  | "healthy"
+  | "warning"
+  | "conflict"
+  | "error"
+  | "offline"
+  | "idle";
+
+export interface ConfigSyncPathSummary {
+  path: string;
+  bytes?: number;
+  reason: string;
+}
+
+export interface ConfigSyncMachineStatus {
+  project_id: string;
+  project_name: string;
+  project_state: ProjectState;
+  machine_id: string;
+  state: ConfigSyncState;
+  last_result_state?: ConfigSyncState;
+  last_attempt_at?: string;
+  last_successful_sync_at?: string;
+  remote_commit?: string;
+  pending_path_count: number;
+  skipped: ConfigSyncPathSummary[];
+  conflicts: ConfigSyncPathSummary[];
+  error_code?: string;
+  error_message?: string;
+  heartbeat_at?: string;
+  status_updated_at?: string;
+  max_file_bytes: number;
+  max_batch_bytes: number;
+  policy_revision: string;
+}
+
+export interface ConfigSyncStatus {
+  repository: { owner: string; name: string; branch: string; web_url: string };
+  policy: { revision: string; max_file_bytes: number; max_batch_bytes: number };
+  state: ConfigSyncState;
+  projects: ConfigSyncMachineStatus[];
+}
+
 export interface CheckoutSession {
   url: string;
 }

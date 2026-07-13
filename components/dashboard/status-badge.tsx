@@ -38,12 +38,14 @@ export function StatusBadge({
   return (
     <Badge
       variant="secondary"
+      role="status"
+      aria-label={label}
       className={cn("gap-1.5 capitalize", STATUS_STYLES[status])}
     >
       <span
         className={cn(
           "size-1.5 rounded-full bg-current",
-          PULSE.includes(status) && "animate-pulse",
+          PULSE.includes(status) && "animate-pulse motion-reduce:animate-none",
         )}
       />
       {label}
