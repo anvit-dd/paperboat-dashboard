@@ -5,6 +5,8 @@ import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { TopNav } from "@/components/dashboard/top-nav";
 import { getMeServer } from "@/lib/api/me-server";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

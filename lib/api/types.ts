@@ -138,6 +138,7 @@ export interface ProjectConfig {
 
 export interface Project {
   id: string;
+  version: number;
   name: string;
   state: ProjectState;
   repository: ProjectRepo;

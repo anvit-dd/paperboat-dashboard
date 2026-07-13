@@ -1,6 +1,8 @@
 "use client";
 
-import { CreditCardIcon, Database01Icon } from "@hugeicons/core-free-icons";
+import { CreditCardIcon, Database01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
+import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
   Card,
@@ -11,6 +13,16 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import {
@@ -23,9 +35,11 @@ import { useApi } from "@/lib/api/use-api";
 import { getUsage } from "@/lib/api/billing";
 import type { Usage } from "@/lib/api/types";
 import { formatCredits } from "@/lib/format";
+import { useProjects } from "@/lib/api/use-projects";
 
 export default function UsagePage() {
   const { data, error, loading } = useApi<Usage>(getUsage);
+  const projects = useProjects();
 
   const storagePct =
     data && data.included_storage_gb + data.purchased_storage_gb > 0
@@ -105,6 +119,77 @@ export default function UsagePage() {
                 <span>{storagePct}% allocated</span>
                 <span>{data.available_storage_gb} GB free</span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-heading text-base font-semibold">
+                Storage by project
+              </CardTitle>
+              <CardDescription>
+                Every project has one persistent volume. Deleting a project returns its allocation to this pool.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {projects.loading ? (
+                <div className="flex justify-center py-8">
+                  <Spinner className="size-5 text-muted-foreground" />
+                </div>
+              ) : projects.error ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 py-4">
+                  <p className="text-sm text-muted-foreground">{projects.error.message}</p>
+                  <Button variant="outline" size="sm" onClick={() => void projects.refresh()}>
+                    Try again
+                  </Button>
+                </div>
+              ) : projects.projects.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 py-8 text-center">
+                  <span className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    <HugeiconsIcon icon={Folder01Icon} className="size-4" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium">No storage allocated</p>
+                    <p className="text-xs text-muted-foreground">Create a project to allocate part of your storage pool.</p>
+                  </div>
+                  <Button size="sm" nativeButton={false} render={<Link href="/dashboard/projects/new" />}>
+                    New project
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Project</TableHead>
+                      <TableHead>Allocated</TableHead>
+                      <TableHead className="hidden sm:table-cell">Applied</TableHead>
+                      <TableHead className="text-right">State</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {projects.projects.map((project) => (
+                      <TableRow key={project.id}>
+                        <TableCell>
+                          <Link className="font-medium hover:underline" href={`/dashboard/projects/${project.id}`}>
+                            {project.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{project.desired_config.storage_gb} GB</TableCell>
+                        <TableCell className="hidden text-muted-foreground sm:table-cell">
+                          {project.current_config.storage_gb} GB
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {project.restart_required ? (
+                            <Badge variant="secondary">Restart pending</Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Applied</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </>

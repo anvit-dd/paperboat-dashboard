@@ -13,6 +13,16 @@ export interface CreateProjectInput {
   setup_script?: string;
 }
 
+export interface UpdateProjectInput {
+  version: number;
+  storage_gb?: number;
+  machine_type_code?: string;
+  region_code?: string;
+  preset_codes?: string[];
+  idle_timeout_code?: string;
+  setup_script?: string;
+}
+
 export async function listProjects(): Promise<Project[]> {
   const response = await pbFetch<ProjectListResponse>("/api/projects");
   return response.items;
@@ -24,6 +34,16 @@ export function getProject(id: string): Promise<Project> {
 
 export function createProject(input: CreateProjectInput): Promise<Project> {
   return pbFetch<Project>("/api/projects", { method: "POST", body: input });
+}
+
+export function updateProject(
+  id: string,
+  input: UpdateProjectInput,
+): Promise<Project> {
+  return pbFetch<Project>(`/api/projects/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
 }
 
 export function startProject(id: string): Promise<Project> {

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -91,7 +92,9 @@ function FeatureLabel({ children }: { children: string }) {
 }
 
 export default function BillingPage() {
-  const { data, error, loading } = useApi<Entitlement>(getEntitlement);
+  const entitlement = useApi<Entitlement>(getEntitlement);
+  const { data, error, loading } = entitlement;
+  const searchParams = useSearchParams();
   const planProducts = useApi<BillingPlanProduct[]>(listBillingPlanProducts);
   const catalogPlans = useApi<CatalogPlan[]>(listCatalogPlans);
   const [opening, setOpening] = React.useState(false);
@@ -99,6 +102,17 @@ export default function BillingPage() {
   const [checkingOut, setCheckingOut] = React.useState<string | null>(null);
   const isFreePlan = data?.plan_code === "free" || data?.state === "free";
   const canOpenPortal = Boolean(data?.active && !isFreePlan);
+
+  React.useEffect(() => {
+    if (searchParams.get("checkout") !== "success") return;
+    let attempts = 0;
+    const interval = window.setInterval(() => {
+      attempts += 1;
+      void entitlement.refresh();
+      if (attempts >= 5) window.clearInterval(interval);
+    }, 2000);
+    return () => window.clearInterval(interval);
+  }, [entitlement.refresh, searchParams]);
   const plans = React.useMemo(() => {
     const paid = (planProducts.data ?? []).map((plan) => ({
       ...plan,
@@ -130,8 +144,8 @@ export default function BillingPage() {
 
   async function openPortal(planCode: string | null = null) {
     if (!canOpenPortal) {
-      toast.error("Billing portal isn't available yet.", {
-        description: "Choose a plan first, then you can manage billing details here.",
+      toast.error("A paid plan is required.", {
+        description: "Choose a paid plan before opening the billing portal.",
       });
       return;
     }
@@ -167,7 +181,7 @@ export default function BillingPage() {
       <PageHeader
         eyebrow="Account"
         title="Billing"
-        description="Manage your plan and payment method through the billing portal."
+        description="Change plans with clear proration, or manage payment details through the billing portal."
       />
 
       {loading ? (
@@ -221,7 +235,8 @@ export default function BillingPage() {
                   const isCurrentPlan =
                     Boolean(data?.active) && data?.plan_code === plan.plan_code;
                   const changingThisPlan =
-                    opening && changingPlan === plan.product_code;
+                    (opening && changingPlan === plan.product_code) ||
+                    (checkingOut === plan.product_code && plan.product_code !== "");
                   const purchasable = plan.product_code !== "";
                   const presentation = getPlanPresentation(plan);
                   const isPopular = Boolean(presentation?.mostPopular);
@@ -318,9 +333,9 @@ export default function BillingPage() {
                           }
                           className="w-full"
                           onClick={() =>
-                            canOpenPortal
-                              ? openPortal(plan.product_code || null)
-                              : startCheckout(plan.product_code)
+                            plan.product_code
+                              ? startCheckout(plan.product_code)
+                              : openPortal(null)
                           }
                           disabled={
                             isCurrentPlan ||

@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_rethrow } from "next/navigation";
 
 import { ApiError } from "./client";
 import { pbServerFetch } from "./server-fetch";
@@ -14,6 +15,7 @@ export async function getMeServer(): Promise<Me | null> {
   try {
     return await pbServerFetch<Me>("/api/me");
   } catch (err) {
+    unstable_rethrow(err);
     if (err instanceof ApiError && err.status === 401) return null;
     console.warn("getMeServer failed:", err);
     return null;

@@ -33,8 +33,8 @@ import {
 } from "@/components/ui/combobox";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Spinner } from "@/components/ui/spinner";
-import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { BashScriptInput } from "@/components/dashboard/bash-script-input";
 import { ApiError } from "@/lib/api/client";
 import {
   listCatalogIdleTimeouts,
@@ -388,13 +388,14 @@ export default function NewProjectPage() {
           ) : null}
 
           <Field>
-            <FieldLabel htmlFor="setup_script">Setup script</FieldLabel>
-            <Textarea
+            <FieldLabel htmlFor="setup_script">Bash setup script</FieldLabel>
+            <BashScriptInput
               id="setup_script"
               name="setup_script"
-              placeholder="Optional commands to run when the machine is prepared."
-              rows={6}
             />
+            <FieldDescription>
+              Optional Bash commands to run when the machine is prepared.
+            </FieldDescription>
           </Field>
 
           {blockerMessage ? (

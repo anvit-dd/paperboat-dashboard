@@ -11,7 +11,7 @@ export default defineConfig({
     environment: "node",
     globals: true,
     include: ["**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["node_modules", ".next", "db/migrations"],
+    exclude: ["node_modules", ".next", "db/migrations", "references/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "lcov"],
@@ -22,6 +22,7 @@ export default defineConfig({
         "**/*.config.*",
         "db/migrations/**",
         "db/migrate.ts",
+        "references/**",
         "**/*.d.ts",
       ],
     },

@@ -13,7 +13,9 @@ import {
   restartProject,
   startProject,
   stopProject,
+  updateProject,
   type CreateProjectInput,
+  type UpdateProjectInput,
 } from "./projects";
 import type { Project, ProjectEvent, ProjectState } from "./types";
 
@@ -264,6 +266,20 @@ export function useProjectActions() {
     return project;
   }, []);
 
+  const update = React.useCallback(
+    async (id: string, input: UpdateProjectInput) => {
+      setBusy(id, true);
+      try {
+        const project = await updateProject(id, input);
+        useProjectsStore.getState().upsertProjects([project]);
+        return project;
+      } finally {
+        setBusy(id, false);
+      }
+    },
+    [setBusy],
+  );
+
   const runLifecycle = React.useCallback(
     async (
       id: string,
@@ -316,6 +332,7 @@ export function useProjectActions() {
 
   return {
     createProject: create,
+    updateProject: update,
     startProject: (id: string) => runLifecycle(id, "starting", startProject),
     stopProject: (id: string) => runLifecycle(id, "stopping", stopProject),
     restartProject: (id: string) => runLifecycle(id, "restarting", restartProject),

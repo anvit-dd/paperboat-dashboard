@@ -1,15 +1,9 @@
 import {
-  BoatIcon,
   Folder01Icon,
-  Configuration01Icon,
-  TrainFrontTunnel,
-  CloudServerIcon,
-  AiLockIcon,
-  TerminalIcon,
   Analytics01Icon,
-  UserGroupIcon,
   CreditCardIcon,
   Settings01Icon,
+  DashboardSquare01Icon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 
@@ -29,24 +23,13 @@ export const navGroups: NavGroup[] = [
   {
     label: "Workspace",
     items: [
-      { title: "Boats", href: "/dashboard/boats", icon: BoatIcon },
+      { title: "Overview", href: "/dashboard", icon: DashboardSquare01Icon },
       { title: "Projects", href: "/dashboard/projects", icon: Folder01Icon },
-      { title: "Configuration", href: "/dashboard/configuration", icon: Configuration01Icon },
-    ],
-  },
-  {
-    label: "Platform",
-    items: [
-      { title: "AgenTunnel", href: "/dashboard/tunnels", icon: TrainFrontTunnel },
-      { title: "Hermes", href: "/dashboard/hermes", icon: CloudServerIcon },
-      { title: "Secrets", href: "/dashboard/secrets", icon: AiLockIcon },
     ],
   },
   {
     label: "Account",
     items: [
-      { title: "Logs", href: "/dashboard/logs", icon: TerminalIcon },
-      { title: "Teams", href: "/dashboard/team", icon: UserGroupIcon },
       { title: "Usage", href: "/dashboard/usage", icon: Analytics01Icon },
       { title: "Billing", href: "/dashboard/billing", icon: CreditCardIcon },
       { title: "Settings", href: "/dashboard/settings", icon: Settings01Icon },

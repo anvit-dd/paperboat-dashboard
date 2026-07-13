@@ -31,6 +31,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { useProject, useProjectEvents } from "@/lib/api/use-projects";
+import { ProjectSettingsForm } from "@/components/dashboard/project-settings-form";
+import { ProjectLifecycleActions } from "@/components/dashboard/project-lifecycle-actions";
 
 const LIVE_STATES = new Set([
   "creating",
@@ -48,6 +50,15 @@ export default function ProjectDetailPage() {
   const id = params.id;
   const { project, loading, error } = useProject(id);
   const events = useProjectEvents(id);
+  const recentEvents = React.useMemo(
+    () =>
+      [...events.events].sort(
+        (left, right) =>
+          right.created_at.localeCompare(left.created_at) ||
+          right.id.localeCompare(left.id),
+      ),
+    [events.events],
+  );
 
   if (loading) {
     return (
@@ -80,14 +91,17 @@ export default function ProjectDetailPage() {
         title={p.name}
         description={p.repository.source_url}
         actions={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard/projects" />}
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} />
-            Back
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/dashboard/projects" />}
+            >
+              <HugeiconsIcon icon={ArrowLeft01Icon} />
+              Back
+            </Button>
+            <ProjectLifecycleActions project={p} />
+          </>
         }
       />
 
@@ -124,6 +138,8 @@ export default function ProjectDetailPage() {
         />
       </div>
 
+      <ProjectSettingsForm key={p.desired_config.config_hash} project={p} />
+
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-base font-semibold">
@@ -142,7 +158,7 @@ export default function ProjectDetailPage() {
             </p>
           ) : (
             <ol className="space-y-3">
-              {events.events.map((e) => (
+              {recentEvents.map((e) => (
                 <li key={e.id} className="flex gap-3 text-sm">
                   <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
                     <HugeiconsIcon icon={GitCommitIcon} className="size-3.5" />

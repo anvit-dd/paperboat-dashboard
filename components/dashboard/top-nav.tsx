@@ -5,13 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Search01Icon,
-  Notification01Icon,
   Logout01Icon,
-  UserCircleIcon,
   Settings01Icon,
   CreditCardIcon,
-  HelpCircleIcon,
 } from "@hugeicons/core-free-icons";
 
 import {
@@ -94,23 +90,7 @@ export function TopNav({ user }: { user: TopNavUser }) {
       </Breadcrumb>
 
       <div className="ml-auto flex items-center gap-1">
-        <div className="relative hidden md:block">
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-            <HugeiconsIcon icon={Search01Icon} className="size-3.5" />
-          </span>
-          <input
-            type="search"
-            placeholder="Search agents, deployments…"
-            className="h-8 w-44 rounded-md border border-input bg-background pl-8 pr-2 text-xs outline-none transition-[width,box-shadow] placeholder:text-muted-foreground focus-visible:w-64 focus-visible:ring-2 focus-visible:ring-ring/30 lg:w-56"
-          />
-        </div>
-
         <ThemeToggle />
-
-        <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-          <HugeiconsIcon icon={Notification01Icon} />
-          <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary ring-2 ring-background" />
-        </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -145,13 +125,6 @@ export function TopNav({ user }: { user: TopNavUser }) {
                 nativeButton={false}
                 render={<Link href="/dashboard/settings" />}
               >
-                <HugeiconsIcon icon={UserCircleIcon} />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                nativeButton={false}
-                render={<Link href="/dashboard/settings" />}
-              >
                 <HugeiconsIcon icon={Settings01Icon} />
                 Settings
               </DropdownMenuItem>
@@ -163,14 +136,6 @@ export function TopNav({ user }: { user: TopNavUser }) {
                 Billing
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              nativeButton={false}
-              render={<Link href="/dashboard/settings" />}
-            >
-              <HugeiconsIcon icon={HelpCircleIcon} />
-              Support
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <form action="/auth/logout" method="post">
               <DropdownMenuItem
