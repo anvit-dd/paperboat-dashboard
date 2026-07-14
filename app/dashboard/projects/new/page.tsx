@@ -135,7 +135,7 @@ export default function NewProjectPage() {
   const blockers = [
     catalog.repositories.length === 0 ? "no GitHub repositories" : undefined,
     catalog.machineTypes.length === 0 ? "no active machine types" : undefined,
-    catalog.regions.length === 0 ? "no enabled Fly regions" : undefined,
+    catalog.regions.length === 0 ? "no enabled regions" : undefined,
     catalog.idleTimeouts.length === 0 ? "no active idle timeout options" : undefined,
     availableStorageGB < 1
       ? hasStoragePendingRelease

@@ -171,7 +171,7 @@ function ProjectCard({
       <CardContent className="flex-1 space-y-4">
         {deleting ? (
           <CardDescription>
-            Scheduled for deletion. Storage will be available after Fly.io cleanup
+            Scheduled for deletion. Storage will be available after cleanup
             finishes.
           </CardDescription>
         ) : null}
