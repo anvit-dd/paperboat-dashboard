@@ -1,6 +1,8 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
@@ -8,6 +10,9 @@ import {
   Configuration01Icon,
   GitBranchIcon,
   InformationCircleIcon,
+  Copy01Icon,
+  Download04Icon,
+  Key01Icon,
 } from "@hugeicons/core-free-icons";
 
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -18,9 +23,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useConfigSyncStatus } from "@/lib/api/config-sync";
-import type { ConfigSyncMachineStatus, ConfigSyncPathSummary, ConfigSyncStatus } from "@/lib/api/types";
+import { deleteConfigSyncOverride, exportConfigRecoveryKey, putConfigSyncOverride, rotateConfigRecoveryKey, useConfigSyncOverrides, useConfigSyncStatus } from "@/lib/api/config-sync";
+import type { ConfigClassificationDecision, ConfigRecoveryKey, ConfigSyncMachineStatus, ConfigSyncPathSummary, ConfigSyncStatus } from "@/lib/api/types";
 
 export default function ConfigurationPage() {
   const { data, error, loading } = useConfigSyncStatus();
@@ -37,6 +44,7 @@ export function ConfigurationStatusView({ data, refreshError }: { data: ConfigSy
   const lastSuccessful = newestSuccessful(data.projects);
   const skipped = flattenSummaries(data.projects, "skipped");
   const conflicts = flattenSummaries(data.projects, "conflicts");
+  const classifierPending = flattenSummaries(data.projects, "classifier_pending");
   const failures = data.projects.filter((item) => item.error_message);
 
   return (
@@ -135,10 +143,75 @@ export function ConfigurationStatusView({ data, refreshError }: { data: ConfigSy
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <ClassificationPanel items={classifierPending} />
         <IssueList title="Skipped files" description="Oversized or unsafe files that stayed on their source machine." items={skipped} empty="No files are being skipped." icon={InformationCircleIcon} />
         <IssueList title="Merge conflicts" description="Concurrent same-path changes preserved in the private configuration repository." items={conflicts} empty="No concurrent changes need attention." icon={CheckmarkCircle02Icon} repoURL={data.repository.web_url} />
+        <SecurityPanel data={data} />
       </div>
     </>
+  );
+}
+
+function ClassificationPanel({ items }: { items: Array<ConfigSyncPathSummary & { project: string }> }) {
+  const overrides = useConfigSyncOverrides();
+  const [busy, setBusy] = React.useState<string>();
+  const overrideMap = new Map((overrides.data ?? []).map((item) => [item.path, item.decision]));
+  const paths = Array.from(new Set([...items.map((item) => item.path), ...overrideMap.keys()])).sort();
+  async function change(path: string, value: string) {
+    setBusy(path);
+    try {
+      if (value) await putConfigSyncOverride(path, value as ConfigClassificationDecision);
+      else await deleteConfigSyncOverride(path);
+      overrides.refresh();
+      toast.success(value ? "Classification override saved." : "Classification override removed.");
+    } catch (error) { toast.error("Could not update classification.", { description: error instanceof Error ? error.message : "Something went wrong." }); }
+    finally { setBusy(undefined); }
+  }
+  return <Card><CardHeader><CardTitle>Awaiting classification</CardTitle><CardDescription>Unknown paths stay local until a safe decision is available. Overrides apply to this exact account path.</CardDescription></CardHeader><CardContent className="border-t pt-4">{paths.length===0?<p className="flex items-center gap-2 text-xs text-muted-foreground"><HugeiconsIcon icon={InformationCircleIcon} className="size-4" />No paths are awaiting classification.</p>:<ul className="space-y-3">{paths.map((pathValue)=>{const pending=items.find((item)=>item.path===pathValue);return <li key={pathValue} className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 text-xs"><p className="truncate font-mono" title={pathValue}>{pathValue}</p><p className="text-muted-foreground">{pending?`${pending.project} · ${pending.reason.replaceAll("_"," ")}`:"Account override"}</p></div><NativeSelect size="sm" aria-label={`Classification for ${pathValue}`} value={overrideMap.get(pathValue)??""} disabled={busy===pathValue} onChange={(event)=>void change(pathValue,event.target.value)}><NativeSelectOption value="">Automatic</NativeSelectOption><NativeSelectOption value="portable">Portable</NativeSelectOption><NativeSelectOption value="project_only">Project only</NativeSelectOption><NativeSelectOption value="exclude">Exclude</NativeSelectOption></NativeSelect></li>})}</ul>}</CardContent></Card>;
+}
+
+function SecurityPanel({ data }: { data: ConfigSyncStatus }) {
+  const [recovery, setRecovery] = React.useState<ConfigRecoveryKey>();
+  const health = data.projects.map((item) => item.classifier_health).find((value) => value === "unavailable" || value === "degraded") ?? data.projects.find((item) => item.classifier_health)?.classifier_health ?? "disabled";
+  const modelRevision = data.projects.find((item) => item.classifier_model_revision)?.classifier_model_revision ?? "Not reported";
+  const keyVersion = Math.max(0, ...data.projects.map((item) => item.encryption_key_version ?? 0));
+
+  React.useEffect(() => {
+    const purpose = new URLSearchParams(window.location.search).get("reauthenticated");
+    if (!purpose) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    const operation = purpose === "config_recovery_export"
+      ? exportConfigRecoveryKey().then(setRecovery)
+      : rotateConfigRecoveryKey().then((result) => toast.success(`Key rotation ${result.state.replaceAll("_", " ")}.`));
+    operation.catch((error) => toast.error("Security operation failed.", { description: error instanceof Error ? error.message : "Something went wrong." }));
+  }, []);
+
+  function download() {
+    if (!recovery) return;
+    const blob = new Blob([recovery.identity + "\n"], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `paperboat-recovery-key-v${recovery.key_version}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Encryption and recovery</CardTitle>
+        <CardDescription>Account configuration is encrypted before it reaches Git. Keep the recovery identity offline.</CardDescription>
+        <CardAction><StatusBadge status={health === "healthy" ? "healthy" : health === "unavailable" ? "failed" : "stopped"} label={`Classifier ${health}`} /></CardAction>
+      </CardHeader>
+      <CardContent className="space-y-4 border-t pt-4">
+        <div className="grid gap-3 sm:grid-cols-3"><Metric label="Repository format" value={data.policy.format || "Not available"} mono /><Metric label="Model revision" value={modelRevision} mono /><Metric label="Key version" value={keyVersion ? String(keyVersion) : "Not reported"} mono /></div>
+        <Alert><HugeiconsIcon icon={Key01Icon} /><AlertTitle>Recovery key access is sensitive</AlertTitle><AlertDescription>Anyone with this identity and repository access can decrypt your portable credentials. Export only to an encrypted offline location.</AlertDescription></Alert>
+        <div className="flex flex-wrap gap-2"><Button nativeButton={false} render={<a href="/auth/reauth?purpose=config_recovery_export" />}><HugeiconsIcon icon={Download04Icon} />Export recovery key</Button><Button variant="outline" nativeButton={false} render={<a href="/auth/reauth?purpose=config_key_rotation" />}>Rotate key</Button></div>
+        <details className="text-xs"><summary className="cursor-pointer font-medium">Mandatory exclusions ({data.policy.mandatory_exclusions?.length ?? 0})</summary><p className="mt-2 text-muted-foreground">These safety rules cannot be overridden.</p><ul className="mt-2 max-h-40 space-y-1 overflow-auto font-mono text-muted-foreground">{(data.policy.mandatory_exclusions ?? []).map((pattern) => <li key={pattern}>{pattern}</li>)}</ul></details>
+      </CardContent>
+      <Dialog open={Boolean(recovery)} onOpenChange={(open) => { if (!open) setRecovery(undefined); }}><DialogContent><DialogHeader><DialogTitle>Recovery identity</DialogTitle><DialogDescription>Store this once in an encrypted offline location. It will not be shown again without reauthentication.</DialogDescription></DialogHeader><pre className="max-h-48 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-all">{recovery?.identity}</pre><DialogFooter><Button variant="outline" onClick={() => { if (recovery) void navigator.clipboard.writeText(recovery.identity); }}><HugeiconsIcon icon={Copy01Icon} />Copy</Button><Button onClick={download}><HugeiconsIcon icon={Download04Icon} />Download</Button></DialogFooter></DialogContent></Dialog>
+    </Card>
   );
 }
 
@@ -174,8 +247,8 @@ function IssueList({ title, description, items, empty, icon, repoURL }: { title:
   );
 }
 
-function flattenSummaries(projects: ConfigSyncMachineStatus[], key: "skipped" | "conflicts") {
-  return projects.flatMap((project) => project[key].map((item) => ({ ...item, project: project.project_name })));
+function flattenSummaries(projects: ConfigSyncMachineStatus[], key: "skipped" | "conflicts" | "classifier_pending") {
+  return projects.flatMap((project) => (project[key] ?? []).map((item) => ({ ...item, project: project.project_name })));
 }
 
 function newestSuccessful(projects: ConfigSyncMachineStatus[]): string | undefined {

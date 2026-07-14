@@ -35,7 +35,7 @@ describe("config sync presentation", () => {
 function baseStatus(): ConfigSyncStatus {
   return {
     repository: { owner: "paperboat", name: "config", branch: "main", web_url: "https://example.test/config" },
-    policy: { revision: "1", max_file_bytes: 5, max_batch_bytes: 25 },
+    policy: { revision: "1", max_file_bytes: 5, max_batch_bytes: 25, format: "paperboat-chezmoi-age-v1", mandatory_exclusions: [".ssh"] },
     state: "idle",
     projects: [{ project_id: "p1", project_name: "Project", project_state: "stopped", machine_id: "m1", state: "idle", pending_path_count: 0, skipped: [], conflicts: [], max_file_bytes: 5, max_batch_bytes: 25, policy_revision: "1" }],
   };

@@ -1,10 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-const api = vi.hoisted(() => ({ useConfigSyncStatus: vi.fn() }));
+const api = vi.hoisted(() => ({ useConfigSyncStatus: vi.fn(), useConfigSyncOverrides: vi.fn(() => ({ data: [], error: undefined, loading: false, refresh: vi.fn() })) }));
 
 vi.mock("@/lib/api/config-sync", () => ({
   useConfigSyncStatus: api.useConfigSyncStatus,
+  useConfigSyncOverrides: api.useConfigSyncOverrides,
+  putConfigSyncOverride: vi.fn(),
+  deleteConfigSyncOverride: vi.fn(),
+  exportConfigRecoveryKey: vi.fn(),
+  rotateConfigRecoveryKey: vi.fn(),
 }));
 
 import {
@@ -135,6 +140,8 @@ function fixtureStatus(projects: ConfigSyncMachineStatus[]): ConfigSyncStatus {
       revision: "policy-7",
       max_file_bytes: 5 * 1024 * 1024,
       max_batch_bytes: 25 * 1024 * 1024,
+	  format: "paperboat-chezmoi-age-v1",
+	  mandatory_exclusions: [".ssh"],
     },
     state: "conflict",
     projects,

@@ -144,7 +144,7 @@ export function AppSidebar() {
             nativeButton={false}
             render={<Link href="/dashboard/billing" />}
           >
-            {entitlement.data?.plan_code === "free" ? "Upgrade plan" : "View plans"}
+            {entitlement.data?.state === "trialing" ? "Manage trial" : "View plans"}
           </Button>
         </div>
       </SidebarFooter>

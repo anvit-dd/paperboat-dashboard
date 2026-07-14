@@ -64,6 +64,7 @@ export interface Entitlement {
   current_period_start?: string;
   current_period_end?: string;
   active: boolean;
+  trial_eligible: boolean;
 }
 
 export interface Usage {
@@ -72,6 +73,30 @@ export interface Usage {
   purchased_storage_gb: number;
   allocated_storage_gb: number;
   available_storage_gb: number;
+}
+
+export interface StorageSubscription {
+  current_gb: number;
+  pending_gb?: number;
+  unit_gb: number;
+}
+
+export interface StorageChangePreview {
+  current_gb: number;
+  requested_gb: number;
+  effective: "immediate" | "next_period";
+  estimated_charge_minor: number;
+  next_renewal_total_minor: number;
+  currency: string;
+}
+
+export interface AutoTopupPolicy {
+  enabled: boolean;
+  threshold: string;
+  bundle_credits: string;
+  last_attempt_state?: string;
+  last_attempt_at?: string;
+  last_error?: string;
 }
 
 export interface BillingPlanProduct {
@@ -202,6 +227,7 @@ export interface ConfigSyncMachineStatus {
   last_successful_sync_at?: string;
   remote_commit?: string;
   pending_path_count: number;
+  classifier_pending?: ConfigSyncPathSummary[];
   skipped: ConfigSyncPathSummary[];
   conflicts: ConfigSyncPathSummary[];
   error_code?: string;
@@ -211,14 +237,22 @@ export interface ConfigSyncMachineStatus {
   max_file_bytes: number;
   max_batch_bytes: number;
   policy_revision: string;
+  classifier_policy_revision?: string;
+  classifier_model_revision?: string;
+  classifier_health?: "healthy" | "degraded" | "unavailable" | "disabled";
+  encryption_key_version?: number;
 }
 
 export interface ConfigSyncStatus {
   repository: { owner: string; name: string; branch: string; web_url: string };
-  policy: { revision: string; max_file_bytes: number; max_batch_bytes: number };
+  policy: { revision: string; max_file_bytes: number; max_batch_bytes: number; format: string; mandatory_exclusions: string[] };
   state: ConfigSyncState;
   projects: ConfigSyncMachineStatus[];
 }
+
+export type ConfigClassificationDecision = "portable" | "project_only" | "exclude";
+export interface ConfigClassificationOverride { path: string; decision: ConfigClassificationDecision; mandatory: boolean; updated_at: string }
+export interface ConfigRecoveryKey { identity: string; recipient: string; key_version: number }
 
 export interface CheckoutSession {
   url: string;

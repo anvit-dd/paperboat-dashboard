@@ -4,10 +4,36 @@ import type {
   CheckoutSession,
   Entitlement,
   Usage,
+  StorageSubscription,
+  StorageChangePreview,
+  AutoTopupPolicy,
 } from "./types";
 
 export function getEntitlement(): Promise<Entitlement> {
   return pbFetch<Entitlement>("/api/billing/entitlement");
+}
+
+export function getStorageSubscription(): Promise<StorageSubscription> {
+  return pbFetch<StorageSubscription>("/api/billing/storage");
+}
+
+export function updateStorageSubscription(storageGb: number): Promise<StorageSubscription> {
+  return pbFetch<StorageSubscription>("/api/billing/storage", {
+    method: "PUT",
+    body: { storage_gb: storageGb },
+  });
+}
+
+export function previewStorageSubscription(storageGb: number): Promise<StorageChangePreview> {
+  return pbFetch<StorageChangePreview>(`/api/billing/storage-preview?storage_gb=${encodeURIComponent(storageGb)}`);
+}
+
+export function getAutoTopupPolicy(): Promise<AutoTopupPolicy> {
+  return pbFetch<AutoTopupPolicy>("/api/billing/auto-topup");
+}
+
+export function updateAutoTopupPolicy(policy: AutoTopupPolicy): Promise<AutoTopupPolicy> {
+  return pbFetch<AutoTopupPolicy>("/api/billing/auto-topup", { method: "PUT", body: policy });
 }
 
 export function getUsage(): Promise<Usage> {
