@@ -183,6 +183,25 @@ function GitHubCard({
                 Missing scopes: {missingScopes.join(", ")}. Reconnect to grant them.
               </p>
             ) : null}
+            <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground">
+                Repositories not loading? Reconnect to refresh your GitHub
+                authorization.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={connect}
+                disabled={connecting}
+              >
+                {connecting ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <HugeiconsIcon icon={GithubIcon} />
+                )}
+                Reconnect
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
