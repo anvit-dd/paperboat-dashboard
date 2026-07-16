@@ -13,6 +13,38 @@ export interface Me {
   workos_subject: string;
 }
 
+export interface ConnectedMachine {
+  id: string;
+  environment_id: string;
+  display_name: string;
+  platform: string;
+  architecture: string;
+  workspace_root: string;
+  state: "offline" | "online" | "disconnected" | "revoked" | "deleted" | "pending";
+  seat_state: "reserved" | "occupied" | "released";
+  online: boolean;
+  runtime_versions: Record<string, string>;
+  enrolled_at?: string;
+  last_seen_at?: string;
+}
+
+export interface ConnectedMachineListResponse { items: ConnectedMachine[] }
+
+export interface ConnectedMachineOverview {
+  entitlement_state: string;
+  product_code?: string;
+  period_start?: string;
+  period_end?: string;
+  seat_quantity: number;
+  occupied_seats: number;
+  available_seats: number;
+  included_bytes: number;
+  consumed_included_bytes: number;
+  consumed_topup_bytes: number;
+  paid_topup_remaining_bytes: number;
+  bootstrap_command?: string;
+}
+
 export type DeviceRequestState =
   | "pending"
   | "approved"
